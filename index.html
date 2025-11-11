@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Yu-Gi-Oh! Jo-Ken-Pô Edition</title>
+
+  <link rel="icon" href="./src/assets/favicon/Favicon.ico" />
+  <!-- estilos -->
+  <link rel="stylesheet" href="./src/styles/reset.css" />
+  <link rel="stylesheet" href="./src/styles/buttons.css" />
+  <link rel="stylesheet" href="./src/styles/containers_and_frames.css" />
+  <link rel="stylesheet" href="./src/styles/main.css" />
+
+  <!-- fonte -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- BACKGROUND VÍDEO -->
+  <div class="bg-video">
+    <video class="video" autoplay loop muted playsinline>
+      <source src="./src/assets/video/yugi.mp4" type="video/mp4" />
+    </video>
+  </div>
+
+  <!-- ===== OVERLAY / AJUDA ===== -->
+  <div id="overlay" class="overlay show">
+    <div class="modal framed-golden-2" role="dialog" aria-modal="true" aria-labelledby="howto-title">
+      <h2 id="howto-title">Como jogar</h2>
+      <p class="desc">
+        Este duelo usa as regras de <strong>Jo-Ken-Pô</strong> no mundo Yu-Gi-Oh:
+      </p>
+      <ul class="rules">
+        <li><b>Mago</b> vence <b>Dragão</b></li>
+        <li><b>Dragão</b> vence <b>Guerreiro</b></li>
+        <li><b>Guerreiro</b> vence <b>Mago</b></li>
+      </ul>
+      <p class="desc">
+        <strong>O oponente joga automaticamente.</strong><br>
+        Clique em uma carta da sua mão para desafiar o oponente.
+      </p>
+      <button id="btn-primary" class="rpgui-button">Iniciar duelo</button>
+    </div>
+  </div>
+
+  <!-- Ajuda -->
+  <button id="btn-help" title="Ajuda">?</button>
+
+  <!-- Áudio -->
+  <audio id="bgm"  src="./src/assets/audios/egyptian_duel.mp3" loop></audio>
+  <audio id="sfx-win"  src="./src/assets/audios/win.wav"></audio>
+  <audio id="sfx-lose" src="./src/assets/audios/lose.wav"></audio>
+
+  <!-- UI PRINCIPAL -->
+  <div class="container">
+    <aside class="container__left framed-golden-2">
+      <div class="score_box frame">
+        <span id="score_points">Vitórias: 0 | Derrotas: 0</span>
+      </div>
+
+      <div class="menu_avatar">
+        <img id="card-image" alt="">
+      </div>
+
+      <div class="card_details frame">
+        <p id="card-name">—</p>
+        <p id="card-type">—</p>
+      </div>
+    </aside>
+
+    <main class="container__right">
+      <div class="card-box__container">
+        <!-- mão do computador -->
+        <div class="framed" id="computer-cards"></div>
+
+        <!-- VERSUS -->
+        <section class="card-versus__container">
+          <div class="versus-top">
+            <div class="card-infield">
+              <img id="player-field-card" alt="">
+            </div>
+
+            <img class="versus-icon" src="./src/assets/icons/millenium2.png" alt="Milênio">
+
+            <div class="card-infield">
+              <img id="computer-field-card" alt="">
+            </div>
+          </div>
+
+          <div class="versus-bottom">
+            <button id="next-duel" class="rpgui-button" onclick="resetDuel()">Próximo Duelo</button>
+          </div>
+        </section>
+
+        <!-- mão do jogador -->
+        <div class="card-box framed" id="player-cards"></div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="./src/scripts/engine.js"></script>
+</body>
+</html>
