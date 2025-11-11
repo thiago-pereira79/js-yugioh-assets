@@ -66,7 +66,7 @@ Escolher a carta certa e vencer o oponente em um duelo rápido, com interações
 
 ## 🧾 Licença
 
-Este projeto está sob a licença **MIT** — sinta-se livre para estudar, adaptar ou evoluir.  
+Este projeto está sob a licença **MIT** - sinta-se livre para estudar, adaptar ou evoluir.  
 
 ---
 
