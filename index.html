@@ -6,6 +6,11 @@
   <title>Yu-Gi-Oh! Jo-Ken-Pô Edition</title>
 
   <link rel="icon" href="./src/assets/favicon/Favicon.ico" />
+  <link rel="preload" as="image" href="./src/assets/icons/card-back.png" />
+  <link rel="preload" as="image" href="./src/assets/icons/magician.png" />
+  <link rel="preload" as="image" href="./src/assets/icons/dragon.png" />
+  <link rel="preload" as="image" href="./src/assets/icons/exodia.png" />
+  <link rel="preload" as="image" href="./src/assets/icons/millenium2.png" />
   <!-- estilos -->
   <link rel="stylesheet" href="./src/styles/reset.css" />
   <link rel="stylesheet" href="./src/styles/buttons.css" />
@@ -21,7 +26,7 @@
 
   <!-- BACKGROUND VÍDEO -->
   <div class="bg-video">
-    <video class="video" autoplay loop muted playsinline>
+    <video class="video" autoplay loop muted playsinline preload="auto" aria-hidden="true">
       <source src="./src/assets/video/yugi.mp4" type="video/mp4" />
     </video>
   </div>
@@ -50,9 +55,9 @@
   <button id="btn-help" title="Ajuda">?</button>
 
   <!-- Áudio -->
-  <audio id="bgm"  src="./src/assets/audios/egyptian_duel.mp3" loop></audio>
-  <audio id="sfx-win"  src="./src/assets/audios/win.wav"></audio>
-  <audio id="sfx-lose" src="./src/assets/audios/lose.wav"></audio>
+  <audio id="bgm"  src="./src/assets/audios/egyptian_duel.mp3" loop preload="auto"></audio>
+  <audio id="sfx-win"  src="./src/assets/audios/win.wav" preload="auto"></audio>
+  <audio id="sfx-lose" src="./src/assets/audios/lose.wav" preload="auto"></audio>
 
   <!-- UI PRINCIPAL -->
   <div class="container">

@@ -14,11 +14,19 @@ body{font-family:"Press Start 2P", monospace;color:#000;overflow:hidden}
 
 /* ===== BACKGROUND VIDEO ===== */
 .bg-video{
-  position:absolute; z-index:-2; inset:0;
+  position:fixed; z-index:-2; inset:0;
   width:100vw;height:100vh; overflow:hidden;
   display:flex;justify-content:center;
+  pointer-events:none;
+  contain:strict;
+  transform:translateZ(0);
 }
-.bg-video .video{width:100vw;height:100vh;object-fit:cover}
+.bg-video .video{
+  display:block;
+  width:100vw;height:100vh;object-fit:cover;
+  backface-visibility:hidden;
+  transform:translateZ(0);
+}
 .bg-video::after{
   content:""; position:absolute; inset:0;
   background:linear-gradient(90deg, rgba(0,0,0,1) 0%, rgba(0,0,0,.8) 50%, rgba(0,0,0,1) 100%);
@@ -59,12 +67,14 @@ body{font-family:"Press Start 2P", monospace;color:#000;overflow:hidden}
   height:100%;
   display:flex; align-items:center; justify-content:center; gap:10px;
   overflow:hidden;
+  contain:layout paint;
 }
 
 /* versus */
 .card-versus__container{
   display:grid; grid-template-rows: 1fr auto; place-items:center;
   min-height:0; padding-block:6px;
+  contain:layout paint;
 }
 .versus-top{
   display:flex; align-items:center; justify-content:center;
@@ -88,6 +98,7 @@ body{font-family:"Press Start 2P", monospace;color:#000;overflow:hidden}
   height:100%;
   display:flex; align-items:center; justify-content:center; gap:12px;
   overflow:hidden;
+  contain:layout paint;
 }
 
 /* cartas */
@@ -96,9 +107,15 @@ body{font-family:"Press Start 2P", monospace;color:#000;overflow:hidden}
   border-radius:8px; background:#111; border:2px solid #daa520;
   display:grid; place-items:center; cursor:pointer;
   transition:transform .2s ease;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
 }
-.card:hover{ transform: translateY(-3px) scale(1.04) }
-.card img{ width:100%; height:100%; object-fit:cover; border-radius:6px }
+.card img{ display:block; width:100%; height:100%; object-fit:cover; border-radius:6px }
+
+@media (hover:hover) and (pointer:fine){
+  .card{ will-change:transform }
+  .card:hover{ transform: translateY(-3px) scale(1.04) }
+}
 
 /* ===== OVERLAY / AJUDA ===== */
 .overlay{
@@ -133,6 +150,8 @@ body{font-family:"Press Start 2P", monospace;color:#000;overflow:hidden}
   border-radius:8px; padding:10px 20px;
   background:#cfa93f; border:3px solid #000; color:#000;
   font-family:"Press Start 2P", monospace; cursor:pointer; transition:.2s;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
 }
 .rpgui-button:hover{ background:#e5c65a; transform:scale(1.03) }
 
@@ -168,14 +187,48 @@ body{font-family:"Press Start 2P", monospace;color:#000;overflow:hidden}
     width: 100%;
     min-width: 0;
     padding: 10px;
+    padding-right: 62px;
     gap: 10px;
+    height: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(68px, 22vw, 96px);
+    grid-template-areas:
+      "score avatar"
+      "details avatar";
+    align-items: center;
+    justify-content: stretch;
   }
   .score_box{
+    grid-area: score;
     padding: 10px 12px;
-    font-size: 12px;
+    font-size: clamp(8px, 2.5vw, 12px);
+    line-height: 1.45;
+  }
+  .menu_avatar{
+    grid-area: avatar;
+    width: clamp(68px, 22vw, 96px);
+    aspect-ratio: 5 / 7;
+    display: grid;
+    place-items: center;
+    min-width: 0;
+  }
+  #card-image{
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
   }
   .card_details{
-    font-size: 12px;
+    grid-area: details;
+    min-width: 0;
+    min-height: 48px;
+    padding: 8px;
+    font-size: clamp(8px, 2.6vw, 12px);
+    line-height: 1.4;
+  }
+  #card-name,
+  #card-type{
+    overflow-wrap: anywhere;
+    line-height: 1.4;
   }
 
   /* Área de jogo embaixo */

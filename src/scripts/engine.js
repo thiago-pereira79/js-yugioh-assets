@@ -15,72 +15,175 @@ const $overlay = document.getElementById("overlay");
 const $modal = $overlay.querySelector(".modal");
 const $btnPrimary = document.getElementById("btn-primary");
 const $btnHelp = document.getElementById("btn-help");
+const $bgVideo = document.querySelector(".video");
+
+const CARD_BACK_SRC = "./src/assets/icons/card-back.png";
+const STATIC_IMAGE_SRC = [
+  CARD_BACK_SRC,
+  "./src/assets/icons/millenium2.png",
+  ...CARDS.map((card) => card.img),
+];
+const CARD_BY_ID = new Map(CARDS.map((card) => [card.id, card]));
+const PRELOADED_IMAGES = new Map();
 
 /* ======= Áudio ======= */
 const bgm  = document.getElementById("bgm");
 const sWin = document.getElementById("sfx-win");
 const sLose= document.getElementById("sfx-lose");
 bgm.volume = 0.4;
+[bgm, sWin, sLose].forEach((audio) => {
+  audio.preload = "auto";
+  audio.load();
+});
 
 /* ======= Estado ======= */
 let playerScore = 0;
 let computerScore = 0;
 let gameStarted = false;
+let lastDetailsId = null;
+let sfxUnlocked = false;
+let lastPointerActivation = 0;
+
+/* ======= Performance helpers ======= */
+function preloadImages(){
+  STATIC_IMAGE_SRC.forEach((src) => {
+    const image = new Image();
+    image.decoding = "async";
+    image.loading = "eager";
+    image.src = src;
+    PRELOADED_IMAGES.set(src, image);
+    if(image.decode) image.decode().catch(() => {});
+  });
+}
+
+function createCardImage(src, alt = ""){
+  const image = document.createElement("img");
+  image.src = src;
+  image.alt = alt;
+  image.decoding = "async";
+  image.loading = "eager";
+  image.draggable = false;
+  return image;
+}
+
+function createCardElement(card){
+  const cardDiv = document.createElement("div");
+  cardDiv.className = "card";
+  if(card) cardDiv.dataset.cardId = card.id;
+  cardDiv.appendChild(createCardImage(card ? card.img : CARD_BACK_SRC, card ? card.name : ""));
+  return cardDiv;
+}
+
+function setTextIfChanged(element, text){
+  if(element.textContent !== text) element.textContent = text;
+}
+
+function setImageIfChanged(image, src, alt){
+  if(image.getAttribute("src") !== src) image.src = src;
+  if(image.alt !== alt) image.alt = alt;
+}
+
+function clearImage(image){
+  if(image.hasAttribute("src")) image.removeAttribute("src");
+  if(image.hasAttribute("alt")) image.removeAttribute("alt");
+}
+
+function safePlay(audio, restart = false){
+  try{
+    if(restart) audio.currentTime = 0;
+    const playback = audio.play();
+    if(playback && playback.catch) playback.catch(() => {});
+  }catch{
+    // Playback can be blocked by browser policy.
+  }
+}
+
+function playSfx(audio){
+  requestAnimationFrame(() => safePlay(audio, true));
+}
+
+function warmSfx(){
+  if(sfxUnlocked) return;
+  sfxUnlocked = true;
+  [sWin, sLose].forEach((audio) => {
+    const warmAudio = audio.cloneNode(true);
+    warmAudio.volume = 0;
+    warmAudio.preload = "auto";
+    warmAudio.load();
+    try{
+      const playback = warmAudio.play();
+      if(playback && playback.then){
+        playback
+          .then(() => {
+            warmAudio.pause();
+            warmAudio.currentTime = 0;
+          })
+          .catch(() => {});
+      }else{
+        warmAudio.pause();
+        warmAudio.currentTime = 0;
+      }
+    }catch{
+      // Best effort only.
+    }
+  });
+}
+
+function syncBackgroundVideo(){
+  if(!$bgVideo) return;
+  if(document.hidden){
+    $bgVideo.pause();
+  }else{
+    safePlay($bgVideo);
+  }
+}
 
 /* ======= UI Aux ======= */
 function setDetails(card){
   if(!card){
-    $name.textContent = "—";
-    $type.textContent = "—";
-    $img.removeAttribute("src");
-    $img.removeAttribute("alt");
+    lastDetailsId = null;
+    setTextIfChanged($name, "—");
+    setTextIfChanged($type, "—");
+    clearImage($img);
     return;
   }
-  $name.textContent = card.name;
-  $type.textContent = (TYPE_PT[card.type] || "").toUpperCase();
-  $img.src = card.img;
-  $img.alt = card.name;
+  if(lastDetailsId === card.id) return;
+  lastDetailsId = card.id;
+  setTextIfChanged($name, card.name);
+  setTextIfChanged($type, (TYPE_PT[card.type] || "").toUpperCase());
+  setImageIfChanged($img, card.img, card.name);
 }
 function updateScore(){
-  $score.textContent = `Vitórias: ${playerScore} | Derrotas: ${computerScore}`;
+  setTextIfChanged($score, `Vitórias: ${playerScore} | Derrotas: ${computerScore}`);
 }
 
 /* ======= Renderização ======= */
 function renderComputerHand(){
-  $computerCards.innerHTML = "";
-  CARDS.forEach(() => {
-    const back = document.createElement("div");
-    back.className = "card";
-    back.innerHTML = `<img src="./src/assets/icons/card-back.png" alt="">`;
-    $computerCards.appendChild(back);
-  });
+  const fragment = document.createDocumentFragment();
+  CARDS.forEach(() => fragment.appendChild(createCardElement(null)));
+  $computerCards.replaceChildren(fragment);
 }
 function renderPlayerHand(){
-  $playerCards.innerHTML = "";
-  CARDS.forEach(card => {
-    const cardDiv = document.createElement("div");
-    cardDiv.classList.add("card");
-    cardDiv.innerHTML = `<img src="${card.img}" alt="${card.name}">`;
-    cardDiv.addEventListener("click", () => gameStarted && playRound(card));
-    $playerCards.appendChild(cardDiv);
-  });
+  const fragment = document.createDocumentFragment();
+  CARDS.forEach((card) => fragment.appendChild(createCardElement(card)));
+  $playerCards.replaceChildren(fragment);
 }
 
 /* ======= Lógica ======= */
 function playRound(playerCard){
   const computerCard = pickRandom();
 
-  $playerFieldCard.src   = playerCard.img;
-  $playerFieldCard.alt   = playerCard.name;
-  $computerFieldCard.src = computerCard.img;
-  $computerFieldCard.alt = computerCard.name;
+  setImageIfChanged($playerFieldCard, playerCard.img, playerCard.name);
+  setImageIfChanged($computerFieldCard, computerCard.img, computerCard.name);
 
   const result = judge(playerCard, computerCard);
   if(result === "win"){
-    playerScore++; sWin.currentTime = 0; sWin.play();
+    playerScore++;
+    playSfx(sWin);
     showBanner("Você venceu!");
   }else if(result === "lose"){
-    computerScore++; sLose.currentTime = 0; sLose.play();
+    computerScore++;
+    playSfx(sLose);
     showBanner("Você perdeu!");
   }else{
     showBanner("Empate!");
@@ -91,14 +194,12 @@ function playRound(playerCard){
 
 function showBanner(text){
   $nextDuel.style.display = "block";
-  $nextDuel.textContent = text;
+  setTextIfChanged($nextDuel, text);
 }
 
 function resetDuel(){
-  $playerFieldCard.removeAttribute("src");
-  $playerFieldCard.removeAttribute("alt");
-  $computerFieldCard.removeAttribute("src");
-  $computerFieldCard.removeAttribute("alt");
+  clearImage($playerFieldCard);
+  clearImage($computerFieldCard);
   setDetails(null);
   $nextDuel.style.display = "none";
 }
@@ -160,23 +261,40 @@ document.addEventListener("keydown", (e) => {
 function startGame(){
   if(!gameStarted){
     gameStarted = true;
-    bgm.play().catch(()=>{});
+    safePlay(bgm);
+    warmSfx();
   }
   closeOverlay();
-  renderComputerHand();
-  renderPlayerHand();
+  if($computerCards.children.length !== CARDS.length) renderComputerHand();
+  if($playerCards.children.length !== CARDS.length) renderPlayerHand();
   updateScore();
   setDetails(null);
+}
+
+function handleCardActivation(event){
+  if(event.type === "click" && performance.now() - lastPointerActivation < 350) return;
+  const target = event.target instanceof Element ? event.target : null;
+  const cardElement = target ? target.closest(".card") : null;
+  if(!gameStarted || !cardElement || !$playerCards.contains(cardElement)) return;
+  if(event.type === "pointerup") lastPointerActivation = performance.now();
+  const card = CARD_BY_ID.get(cardElement.dataset.cardId);
+  if(card) playRound(card);
+}
+
+function resumeBgmAfterGesture(){
+  if(gameStarted && bgm.paused) safePlay(bgm);
 }
 
 /* ======= Eventos ======= */
 $btnPrimary.onclick = startGame;
 $btnHelp.addEventListener("click", () => openOverlay("help"));
-document.body.addEventListener("pointerdown", () => {
-  if(gameStarted && bgm.paused) bgm.play().catch(()=>{});
-}, { once:true });
+$playerCards.addEventListener("pointerup", handleCardActivation, { passive:true });
+$playerCards.addEventListener("click", handleCardActivation);
+document.body.addEventListener("pointerdown", resumeBgmAfterGesture, { passive:true });
+document.addEventListener("visibilitychange", syncBackgroundVideo);
 
 /* ======= Boot ======= */
+preloadImages();
 renderComputerHand();
 openOverlay("start");
 window.resetDuel = resetDuel;
